@@ -31,7 +31,7 @@ export default function Aside() {
               pathname === '/dashboard/users' ? 'bg-secondary font-medium' : ''
             }`}
           >
-            <Users size={20} className="shrink-0" />
+            <Users size={24} className="shrink-0" />
             {!minimize && <span>Users</span>}
           </Link>
         </nav>

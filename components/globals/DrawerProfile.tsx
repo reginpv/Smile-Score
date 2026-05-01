@@ -59,7 +59,7 @@ export default function DrawerProfile() {
                   height={32}
                 />
               ) : (
-                <CircleUserRound size={28} className="inline mr-2 mb-1" />
+                <CircleUserRound size={24} className="inline mr-2 mb-1" />
               )}
             </div>
             <div>

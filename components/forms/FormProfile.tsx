@@ -166,7 +166,7 @@ export default function FormProfile({
                   </div>
                 </div>
               ) : (
-                <UserRoundPen size={34} className=" text-gray-900" />
+                <UserRoundPen size={24} className="text-gray-900" />
               )}
             </label>
             <input

@@ -3,7 +3,14 @@
 import { useState, useTransition } from 'react'
 import { createUser, updateUser, softDeleteUser } from '@/lib/actions/user'
 import { useRouter } from 'next/navigation'
-import { UserPlus, UserPen, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  UserPlus,
+  UserPen,
+  Trash2,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 type UserRow = {
@@ -30,7 +37,9 @@ export default function UsersTable({
   const [modal, setModal] = useState<'add' | 'edit' | null>(null)
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null)
-  const [formErrors, setFormErrors] = useState<Record<string, string> | null>(null)
+  const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
+    null,
+  )
   const [formMessage, setFormMessage] = useState<string | null>(null)
 
   function goToPage(p: number) {
@@ -111,7 +120,7 @@ export default function UsersTable({
           className="button flex items-center gap-2 bg-accent text-white hover:bg-accent/80 px-4"
           onClick={openAdd}
         >
-          <UserPlus size={16} />
+          <UserPlus size={24} />
           Add User
         </button>
       </div>
@@ -131,7 +140,10 @@ export default function UsersTable({
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="border-b border-primary hover:bg-primary/60">
+              <tr
+                key={user.id}
+                className="border-b border-primary hover:bg-primary/60"
+              >
                 <td className="py-2 px-3 text-gray-400">{user.id}</td>
                 <td className="py-2 px-3">{user.name}</td>
                 <td className="py-2 px-3">{user.email}</td>
@@ -148,14 +160,14 @@ export default function UsersTable({
                       onClick={() => openEdit(user)}
                       title="Edit"
                     >
-                      <UserPen size={16} />
+                      <UserPen size={24} />
                     </button>
                     <button
                       className="button button--circle text-red-500 hover:bg-red-50"
                       onClick={() => setDeleteTarget(user)}
                       title="Delete"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={24} />
                     </button>
                   </div>
                 </td>
@@ -185,7 +197,7 @@ export default function UsersTable({
               disabled={page === 1}
               title="Previous page"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={24} />
             </button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
               <button
@@ -202,7 +214,7 @@ export default function UsersTable({
               disabled={page === totalPages}
               title="Next page"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={24} />
             </button>
           </div>
         </div>
@@ -215,17 +227,23 @@ export default function UsersTable({
             <div className="form-control">
               <label>Name</label>
               <input type="text" name="name" className="w-full" />
-              {formErrors?.name && <div className="error">{formErrors.name}</div>}
+              {formErrors?.name && (
+                <div className="error">{formErrors.name}</div>
+              )}
             </div>
             <div className="form-control">
               <label>Email</label>
               <input type="email" name="email" className="w-full" />
-              {formErrors?.email && <div className="error">{formErrors.email}</div>}
+              {formErrors?.email && (
+                <div className="error">{formErrors.email}</div>
+              )}
             </div>
             <div className="form-control">
               <label>Password</label>
               <input type="password" name="password" className="w-full" />
-              {formErrors?.password && <div className="error">{formErrors.password}</div>}
+              {formErrors?.password && (
+                <div className="error">{formErrors.password}</div>
+              )}
             </div>
             <div className="form-control">
               <label>Role</label>
@@ -238,7 +256,10 @@ export default function UsersTable({
             {formMessage && (
               <div className="alert alert--danger">{formMessage}</div>
             )}
-            <button className="button w-full justify-center" disabled={isPending}>
+            <button
+              className="button w-full justify-center"
+              disabled={isPending}
+            >
               {isPending ? 'Creating...' : 'Create User'}
             </button>
           </form>
@@ -258,7 +279,9 @@ export default function UsersTable({
                 className="w-full"
                 defaultValue={selectedUser.name}
               />
-              {formErrors?.name && <div className="error">{formErrors.name}</div>}
+              {formErrors?.name && (
+                <div className="error">{formErrors.name}</div>
+              )}
             </div>
             <div className="form-control">
               <label>Email</label>
@@ -268,11 +291,17 @@ export default function UsersTable({
                 className="w-full"
                 defaultValue={selectedUser.email}
               />
-              {formErrors?.email && <div className="error">{formErrors.email}</div>}
+              {formErrors?.email && (
+                <div className="error">{formErrors.email}</div>
+              )}
             </div>
             <div className="form-control">
               <label>Role</label>
-              <select name="role" className="w-full" defaultValue={selectedUser.role}>
+              <select
+                name="role"
+                className="w-full"
+                defaultValue={selectedUser.role}
+              >
                 <option value="USER">User</option>
                 <option value="ADMIN">Admin</option>
                 <option value="SUPERADMIN">Superadmin</option>
@@ -281,7 +310,10 @@ export default function UsersTable({
             {formMessage && (
               <div className="alert alert--danger">{formMessage}</div>
             )}
-            <button className="button w-full justify-center" disabled={isPending}>
+            <button
+              className="button w-full justify-center"
+              disabled={isPending}
+            >
               {isPending ? 'Saving...' : 'Save Changes'}
             </button>
           </form>
@@ -292,7 +324,8 @@ export default function UsersTable({
       {deleteTarget && (
         <Modal title="Delete User" onClose={() => setDeleteTarget(null)}>
           <p className="mb-5">
-            Are you sure you want to delete <strong>{deleteTarget.name}</strong>?
+            Are you sure you want to delete <strong>{deleteTarget.name}</strong>
+            ?
           </p>
           <div className="flex gap-2 justify-end">
             <button className="button" onClick={() => setDeleteTarget(null)}>
@@ -319,7 +352,9 @@ function RoleBadge({ role }: { role: string }) {
     USER: 'bg-gray-100 text-gray-600',
   }
   return (
-    <span className={`text-xs px-2 py-0.5 rounded font-medium ${styles[role] ?? styles.USER}`}>
+    <span
+      className={`text-xs px-2 py-0.5 rounded font-medium ${styles[role] ?? styles.USER}`}
+    >
       {role}
     </span>
   )
@@ -346,7 +381,7 @@ function Modal({
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg">{title}</h2>
           <button className="button button--circle" onClick={onClose}>
-            <X size={18} />
+            <X size={24} />
           </button>
         </div>
         {children}
