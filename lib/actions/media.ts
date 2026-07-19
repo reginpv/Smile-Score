@@ -7,7 +7,6 @@ import { requireUser } from '@/lib/actions/guard'
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_SIZE_BYTES = 2 * 1024 * 1024 // 2mb, matches serverActions.bodySizeLimit
 
-// UPLOAD IMAGE — user is derived from the session, never from the client.
 export async function uploadMedia(image: File) {
   const session = await requireUser()
   if (!session) {
@@ -23,7 +22,11 @@ export async function uploadMedia(image: File) {
   }
 
   if (image.size > MAX_SIZE_BYTES) {
-    return { success: false, payload: null, message: 'File is too large (max 2MB).' }
+    return {
+      success: false,
+      payload: null,
+      message: 'File is too large (max 2MB).',
+    }
   }
 
   const userId = session.user.id
@@ -49,7 +52,6 @@ export async function uploadMedia(image: File) {
   }
 }
 
-// DELETE — only allows deleting the blob currently set as this user's image.
 export async function deleteMedia(_prevState: any, formData: any) {
   const session = await requireUser()
   if (!session) {
@@ -69,7 +71,11 @@ export async function deleteMedia(_prevState: any, formData: any) {
 
     // Guard against deleting arbitrary blobs: the URL must be the caller's own image.
     if (!me || me.image !== url) {
-      return { success: false, payload: null, message: 'Not authorized to delete this file.' }
+      return {
+        success: false,
+        payload: null,
+        message: 'Not authorized to delete this file.',
+      }
     }
 
     await del(url)

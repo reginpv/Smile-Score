@@ -24,8 +24,21 @@ model User {
   deletedAt                   DateTime?
   password                    String?
   updatedAt                   DateTime?            @updatedAt
+  smileScores                 SmileScore[]
 
   @@index([email, deletedAt])
+}
+
+model SmileScore {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  imageUrl  String
+  score     Int
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model ResetPasswordToken {

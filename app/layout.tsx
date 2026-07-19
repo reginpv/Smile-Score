@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'NEXT.js CRUD template with Zustand and NextAuth',
+  title: 'Smile Score',
   description:
-    'A template for building a CRUD application using NEXT.js, Zustand for state management, and NextAuth for authentication.',
+    'Smile Score is a NEXT.js CRUD template with Zustand and NextAuth, featuring a public gallery of smile scores and user authentication.',
 }
 
 export default function RootLayout({
@@ -33,7 +33,11 @@ export default function RootLayout({
       >
         <Providers>
           <HydrationZustand>{children}</HydrationZustand>
-          <Toaster richColors position="bottom-right" toastOptions={{ style: { fontSize: '16px' } }} />
+          <Toaster
+            richColors
+            position="bottom-right"
+            toastOptions={{ style: { fontSize: '16px' } }}
+          />
         </Providers>
       </body>
     </html>

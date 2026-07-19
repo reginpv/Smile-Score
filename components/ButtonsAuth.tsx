@@ -1,21 +1,7 @@
 'use client'
 
-import { signIn, signOut } from 'next-auth/react'
+import { signOut } from 'next-auth/react'
 import { LogOut } from 'lucide-react'
-
-export function ButtonSignIn({
-  className,
-  label = 'Login',
-}: {
-  className?: string
-  label?: string
-}) {
-  return (
-    <button type="button" className={`button ${className}`} onClick={() => signIn()}>
-      {label}
-    </button>
-  )
-}
 
 export function ButtonSignOut({ className }: { className?: string }) {
   return (

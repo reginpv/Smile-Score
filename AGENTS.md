@@ -18,6 +18,8 @@ Read this before making any changes. This is the canonical reference for AI agen
 - **Session update needs `update()` call on client** after `updateMe` mutation.
 - **Password hashing:** 12 rounds in all server actions, 10 rounds in seed.
 - **TypeScript strict mode is OFF** — do not add `!` assertions or defensive types.
+- **Server actions gate access via `lib/actions/guard.ts`** (`requireUser()`/`requireAdmin()`) — do not call `getServerSession()` inline in a new action.
+- **Smile Score face detection is 100% client-side** (MediaPipe, `lib/mediapipe/faceLandmarker.ts`) — there is no server-side inference.
 
 ---
 
@@ -27,6 +29,8 @@ Read this before making any changes. This is the canonical reference for AI agen
 Deployed to Vercel. Data on Neon PostgreSQL. Media on Vercel Blob.
 
 Features: JWT auth (Credentials), role-based user management, soft-delete, file uploads, email (password reset), paginated data tables, responsive layout with sidebar/drawer.
+
+Ships with **Smile Score** as a reference feature built on top of the boilerplate: a public homepage gallery where logged-in users upload a selfie, get an on-device smile score, and see it alongside everyone else's.
 
 ---
 
@@ -47,6 +51,7 @@ Features: JWT auth (Credentials), role-based user management, soft-delete, file 
 | Icons | `lucide-react` | 1.x |
 | CSS | `tailwindcss` | 4.x (PostCSS, no config file) |
 | TypeScript | `typescript` | 6.x |
+| Face detection | `@mediapipe/tasks-vision` | 0.10.x (client-side only; WASM + model fetched from CDN at runtime) |
 
 **TypeScript strict mode is OFF** — `"strict": false` in tsconfig.
 
@@ -75,8 +80,12 @@ components/
   forms/                             # Login, Signup, Profile, Security forms
   globals/                           # Header, Footer, Aside, Drawer
   users/UsersTable.tsx               # Paginated user table
+  smile-score/                       # Smile Score feature UI
+    SmileScoreSection.tsx             # Server: fetches session + recent scores
+    SmileScoreSectionClient.tsx       # Client: gallery state, optimistic add/remove
+    SmileScoreWidget.tsx               # Upload + analyze + save flow (logged-in only)
+    SmileScoreCard.tsx                  # One gallery entry (photo, score, delete)
   ButtonsAuth.tsx
-  Icons.tsx
   ui/ButtonDrawer.tsx
 
 config/
@@ -86,10 +95,14 @@ lib/
   authOptions.ts                     # NextAuth config (Credentials, JWT, callbacks)
   prisma.ts                          # Prisma singleton with Neon adapter
   helper.tsx                         # isValidEmail()
+  mediapipe/
+    faceLandmarker.ts                # MediaPipe FaceLandmarker singleton + smile score math
   actions/
+    guard.ts                         # requireUser/requireAdmin/sanitizeUser(s) — auth guards for all actions
     user.ts                          # Admin user CRUD
     me.ts                            # Current user operations
     media.ts                         # Vercel Blob upload/delete
+    smileScore.ts                    # Smile Score CRUD (get/save/delete)
     util.ts                          # Password reset + email
 
 prisma/
@@ -139,6 +152,24 @@ enum Role {
   USER
 }
 ```
+
+### SmileScore
+
+```prisma
+model SmileScore {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  imageUrl  String
+  score     Int
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+```
+
+One row per uploaded photo: `score` is 0–100, `imageUrl` points at the Vercel Blob upload. This model isn't in the database yet — run `npm run db:push` to sync the schema before relying on it against a real database.
 
 ### ResetPasswordToken
 
@@ -196,6 +227,8 @@ const session = await getServerSession(authOptions)
 if (!session?.user?.id) redirect('/login')
 ```
 
+This raw pattern is for **pages** (redirect on failure). **Server actions** should use the `guard.ts` helpers instead — see below.
+
 ### Client-side session access
 
 ```typescript
@@ -218,6 +251,23 @@ All actions: `'use server'`, in `lib/actions/`.
 ```
 
 Form-bound actions accept `(_prevState: any, formData: FormData)`.
+
+### guard.ts — Auth guards
+
+Used by every server action that needs to check who's calling — do NOT call `getServerSession()` directly inside an action.
+
+| Function | Purpose |
+|---|---|
+| `requireUser()` | Returns the session if signed in, else `null` |
+| `requireAdmin()` | Returns the session if `SUPERADMIN`/`ADMIN`, else `null` |
+| `sanitizeUser(user)` / `sanitizeUsers(users)` | Strips `password` before sending a user row to the client |
+
+```typescript
+import { requireUser } from '@/lib/actions/guard'
+
+const session = await requireUser()
+if (!session) return { success: false, payload: null, message: 'Not authorized.' }
+```
 
 ### user.ts — Admin CRUD
 
@@ -255,10 +305,20 @@ export const getMe = cache(async () => {
 
 | Function | Purpose |
 |---|---|
-| `uploadMedia(userId: number, imageFile: File)` | Uploads to Blob at `user/{userId}/{random}-{filename}`, returns URL |
-| `deleteMedia(_prev, formData)` | Deletes blob URL from formData |
+| `uploadMedia(image: File)` | Requires `requireUser()`; userId comes from the session, NOT a parameter. Uploads to Blob at `user/{userId}/{filename}`, returns the blob (`payload.url`) |
+| `deleteMedia(_prev, formData)` | Requires `requireUser()`; only deletes the blob URL currently set as the caller's own `image` |
 
-Blob domain allowlisted in `next.config.ts`: `tosysoik0rjt4ojn.public.blob.vercel-storage.com`
+Blob domain allowlisted in `next.config.ts` (`images.remotePatterns`) — each Blob store has its own hostname; check `next.config.ts` for the current value rather than assuming, since it changes if the store is ever recreated.
+
+### smileScore.ts — Smile Score
+
+| Function | Purpose | Cache |
+|---|---|---|
+| `getRecentSmileScores(limit = 12)` | Public read, most recent scores + uploader name | `'use cache'`, tag `smile-scores` |
+| `saveSmileScore(imageUrl, score)` | Requires `requireUser()`; validates `score` is 0–100; creates a `SmileScore` row | revalidates tag `smile-scores` + path `/` |
+| `deleteSmileScore(id)` | Requires `requireUser()`; only the row's own `userId` may delete; deletes the Blob then the row | revalidates tag `smile-scores` + path `/` |
+
+The photo upload itself reuses `uploadMedia` from `media.ts` — `smileScore.ts` only persists the resulting URL + score. Face detection/scoring happens entirely client-side before either call (see `lib/mediapipe/faceLandmarker.ts`).
 
 ### util.ts — Auth utilities
 
@@ -296,6 +356,8 @@ import { revalidateTag } from 'next/cache'
 revalidateTag('users')
 revalidateTag(`user-${id}`)
 ```
+
+Other tags in use: `smile-scores` (`lib/actions/smileScore.ts`), invalidated together with `revalidatePath('/')` since the gallery lives on the homepage.
 
 ### `react cache()` — per-request dedup
 
@@ -354,12 +416,11 @@ export default async function SomethingPage() {
 ```typescript
 'use server'
 import prisma from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/authOptions'
+import { requireUser } from '@/lib/actions/guard'
 
 export async function myAction(_prevState: any, formData: FormData) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return { success: false, message: 'Unauthorized' }
+  const session = await requireUser()
+  if (!session) return { success: false, payload: null, message: 'Not authorized.' }
 
   // ... logic
 
@@ -438,3 +499,6 @@ Run `npm run db:seed`. The seed script uses `new PrismaClient()` directly (not t
 8. **No middleware.ts** — no global route guard. Each dashboard page must call `getServerSession()`.
 9. **Password rounds:** 12 in all server actions, 10 in seed.
 10. **Server action responses** are plain objects — never throw. Pattern: `{ success, message, payload? }`.
+11. **New server actions gate access via `lib/actions/guard.ts`** (`requireUser()`/`requireAdmin()`), not an inline `getServerSession()` call.
+12. **MediaPipe's WASM runtime and model are fetched from external CDNs** (`cdn.jsdelivr.net`, `storage.googleapis.com`) at runtime on the client — nothing is bundled. If those endpoints change or go down, smile scoring breaks silently until the URLs in `lib/mediapipe/faceLandmarker.ts` are updated.
+13. **`SmileScore` isn't in the database yet** — run `npm run db:push` to sync the schema before relying on it against a real database.

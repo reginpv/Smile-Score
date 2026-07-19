@@ -3,16 +3,8 @@ import { authOptions } from '@/lib/authOptions'
 
 const ADMIN_ROLES = ['SUPERADMIN', 'ADMIN']
 
-// Result returned to the client when a guard denies access. Server actions
-// return this shape instead of throwing so the calling form can render it.
-export const unauthorized = {
-  success: false as const,
-  payload: null,
-  message: 'You are not authorized to perform this action.',
-}
-
 // Returns the current session, or null if the caller is not signed in.
-export async function getSession(): Promise<Session | null> {
+async function getSession(): Promise<Session | null> {
   return (await getServerSession(authOptions)) as Session | null
 }
 

@@ -10,7 +10,9 @@ export default async function TemplateDefault({
   return (
     <>
       <Header />
-      <main className="bg-primary">{children}</main>
+      <main className="bg-primary flex flex-col justify-center items-center">
+        {children}
+      </main>
       <Footer />
       <Drawer />
     </>
