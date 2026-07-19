@@ -1,6 +1,6 @@
-# nextcrud
+# Smile Score
 
-A production-ready **Next.js 16** full-stack CRUD boilerplate. Built for teams who need a solid foundation with authentication, user management, file uploads, and email — all deployed on Vercel with Neon PostgreSQL and Vercel Blob.
+A **Next.js 16** app where logged-in users upload a selfie and get an on-device smile score — computed entirely in the browser via MediaPipe face detection, no server-side inference — shown in a public gallery on the homepage. Built on a production-ready full-stack CRUD boilerplate with authentication, user management, file uploads, and email, all deployed on Vercel with Neon PostgreSQL and Vercel Blob.
 
 ---
 
