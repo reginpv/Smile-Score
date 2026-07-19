@@ -78,7 +78,11 @@ export async function deleteMedia(_prevState: any, formData: any) {
       }
     }
 
-    await del(url)
+    try {
+      await del(url)
+    } catch (blobError) {
+      console.error('Error deleting blob for media', url, blobError)
+    }
 
     return { success: true, payload: 'Media deleted successfully' }
   } catch (error) {

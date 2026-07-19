@@ -83,7 +83,12 @@ export async function deleteSmileScore(id: number) {
       return { success: false, message: 'You can only delete your own photos.' }
     }
 
-    await del(smileScore.imageUrl)
+    try {
+      await del(smileScore.imageUrl)
+    } catch (blobError) {
+      console.error('Error deleting blob for smile score', id, blobError)
+    }
+
     await prisma.smileScore.delete({ where: { id } })
 
     revalidateTag('smile-scores', 'max')
