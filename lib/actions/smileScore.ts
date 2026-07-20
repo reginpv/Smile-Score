@@ -1,7 +1,7 @@
 'use server'
 
 import prisma from '@/lib/prisma'
-import { del } from '@vercel/blob'
+import { del, BlobNotFoundError } from '@vercel/blob'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { cacheLife, cacheTag } from 'next/cache'
 import { requireUser } from '@/lib/actions/guard'
@@ -86,7 +86,10 @@ export async function deleteSmileScore(id: number) {
     try {
       await del(smileScore.imageUrl)
     } catch (blobError) {
-      console.error('Error deleting blob for smile score', id, blobError)
+      if (!(blobError instanceof BlobNotFoundError)) {
+        console.error('Error deleting blob for smile score', id, blobError)
+        return { success: false, message: 'Failed to delete photo.' }
+      }
     }
 
     await prisma.smileScore.delete({ where: { id } })

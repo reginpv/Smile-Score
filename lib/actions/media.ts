@@ -1,6 +1,6 @@
 'use server'
 
-import { put, del } from '@vercel/blob'
+import { put, del, BlobNotFoundError } from '@vercel/blob'
 import prisma from '@/lib/prisma'
 import { requireUser } from '@/lib/actions/guard'
 
@@ -81,7 +81,10 @@ export async function deleteMedia(_prevState: any, formData: any) {
     try {
       await del(url)
     } catch (blobError) {
-      console.error('Error deleting blob for media', url, blobError)
+      if (!(blobError instanceof BlobNotFoundError)) {
+        console.error('Error deleting blob for media', url, blobError)
+        return { success: false, payload: null, message: 'Failed to delete photo.' }
+      }
     }
 
     return { success: true, payload: 'Media deleted successfully' }
