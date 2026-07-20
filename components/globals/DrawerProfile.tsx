@@ -73,7 +73,7 @@ export default function DrawerProfile() {
               <p className="text-gray-500">{session?.user?.email}</p>
             </div>
           </div>
-          <div className="flex flex-col justify-center py-3 px-1">
+          <div className="flex flex-col py-3 px-1">
             {(session?.user?.role === 'SUPERADMIN' ||
               session?.user?.role === 'ADMIN') && (
               <Link

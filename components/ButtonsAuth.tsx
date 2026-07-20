@@ -9,7 +9,7 @@ export function ButtonSignOut({ className }: { className?: string }) {
       onClick={() => {
         signOut()
       }}
-      className={`button w-full justify-start ${className}`}
+      className={`button flex w-full justify-start ${className}`}
     >
       <LogOut className="inline mr-2 mb-1" />
       Logout

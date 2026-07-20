@@ -41,7 +41,7 @@ export default function SmileScoreSectionClient({
 
       {scores.length === 0 ? (
         <p className="text-center text-gray-500">
-          No smiles yet — be the first to upload one!
+          No smiles yet, be the first to upload one!
         </p>
       ) : (
         <div className="flex flex-wrap justify-center gap-8 w-full max-w-4xl mx-auto">
